@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import AddSessionModel from "@/app/_components/AddSessionModel";
 
 type doctorsAgentListProps = {
   id: number;
@@ -28,9 +28,7 @@ const DoctorAgent = ({ doctorAgentPropList }: props) => {
       <p className="line-clamp-2 text-sm text-gray-500">
         {doctorAgentPropList.description}
       </p>
-      <Button className="w-full mt-2 cursor-pointer">
-        Start a consultation
-      </Button>
+      <AddSessionModel />
     </div>
   );
 };

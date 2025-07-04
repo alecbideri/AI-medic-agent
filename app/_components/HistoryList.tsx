@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import AddSessionModel from "@/app/_components/AddSessionModel";
 
 const HistoryList = () => {
   const [historyList, setHistoryList] = useState([]);
@@ -19,7 +19,7 @@ const HistoryList = () => {
           <p className="text-sm md:text-base">
             It looks like you haven't consulted with any of our doctor
           </p>
-          <Button className="cursor-pointer">Start a consultation</Button>
+          <AddSessionModel />
         </div>
       ) : (
         <div>List</div>
