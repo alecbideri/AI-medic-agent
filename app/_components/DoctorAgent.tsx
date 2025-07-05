@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import AddSessionModel from "@/app/_components/AddSessionModel";
 
-type doctorsAgentListProps = {
+export type doctorsAgentListProps = {
   id: number;
   specialist: string;
   description: string;

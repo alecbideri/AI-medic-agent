@@ -20,7 +20,17 @@ export async function POST(req: NextRequest) {
       ],
     });
     const rawResp = completion.choices[0].message;
-    return NextResponse.json(rawResp);
+
+    //@ts-ignore
+    const Resp = rawResp.content
+      ?.trim()
+      .replace("```json", "")
+      .replace("```", "");
+
+    //@ts-ignore
+    const JSONResp = JSON.parse(Resp);
+
+    return NextResponse.json(JSONResp);
   } catch (e) {
     return NextResponse.json(e);
   }

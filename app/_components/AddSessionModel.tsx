@@ -12,10 +12,35 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, PlusCircle } from "lucide-react";
+import { ArrowRight, Loader2, PlusCircle } from "lucide-react";
+import axios from "axios";
+import DoctorAgent, {
+  doctorsAgentListProps,
+} from "@/app/_components/DoctorAgent";
+import SuggestedDoctorCard from "@/app/_components/SuggestedDoctorCard";
 
 function AddSessionModel() {
   const [note, setNote] = useState<string>();
+  const [loading, setLoading] = useState(false);
+  const [suggestedDoctors, setSuggestedDoctors] =
+    useState<doctorsAgentListProps[]>();
+  const [selectedDoctor, setSelectedDoctor] = useState<doctorsAgentListProps>();
+
+  // start consultation
+
+  const onStartConsultation = () => {};
+
+  const OnClickNext = async () => {
+    setLoading(true);
+    const result = await axios.post("/api/suggested-doctors", {
+      notes: note,
+    });
+
+    console.log(result.data);
+    setSuggestedDoctors(result.data);
+    setLoading(false);
+  };
+
   return (
     <Dialog>
       <DialogTrigger>
@@ -27,14 +52,29 @@ function AddSessionModel() {
         <DialogHeader>
           <DialogTitle>Add Basic Details</DialogTitle>
           <DialogDescription asChild>
-            <div>
-              <h2>Add Symptoms or Any Other Details</h2>
-              <Textarea
-                placeholder="Add Details here..."
-                className="mt-3 h-[150px]"
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </div>
+            {!suggestedDoctors ? (
+              <div>
+                <h2>Add Symptoms or Any Other Details</h2>
+                <Textarea
+                  placeholder="Add Details here..."
+                  className="mt-3 h-[150px]"
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <h2>Select the doctor</h2>
+                <div className="grid grid-cols-3 gap-10">
+                  {suggestedDoctors.map((doctor, index) => (
+                    <SuggestedDoctorCard
+                      doctorAgentPropList={doctor}
+                      key={index}
+                      setSelectedDoctor={() => setSelectedDoctor(doctor)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -43,9 +83,20 @@ function AddSessionModel() {
               Cancel
             </Button>
           </DialogClose>
-          <Button disabled={!note} className="cursor-pointer">
-            <ArrowRight /> Next
-          </Button>
+          {!suggestedDoctors ? (
+            <Button
+              disabled={!note || loading}
+              className="cursor-pointer"
+              onClick={() => OnClickNext()}
+            >
+              Next
+              {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+            </Button>
+          ) : (
+            <Button onClick={() => onStartConsultation()}>
+              Start Consultation
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
