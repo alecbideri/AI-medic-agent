@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ArrowRight, PlusCircle } from "lucide-react";
 
 function AddSessionModel() {
   const [note, setNote] = useState<string>();
@@ -19,7 +20,7 @@ function AddSessionModel() {
     <Dialog>
       <DialogTrigger>
         <Button className="w-full mt-2 cursor-pointer">
-          Start a consultation
+          <PlusCircle /> Start a consultation
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -43,7 +44,7 @@ function AddSessionModel() {
             </Button>
           </DialogClose>
           <Button disabled={!note} className="cursor-pointer">
-            Start
+            <ArrowRight /> Next
           </Button>
         </DialogFooter>
       </DialogContent>
