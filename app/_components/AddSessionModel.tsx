@@ -18,6 +18,7 @@ import DoctorAgent, {
   doctorsAgentListProps,
 } from "@/app/_components/DoctorAgent";
 import SuggestedDoctorCard from "@/app/_components/SuggestedDoctorCard";
+import { useRouter } from "next/navigation";
 
 function AddSessionModel() {
   const [note, setNote] = useState<string>();
@@ -25,6 +26,7 @@ function AddSessionModel() {
   const [suggestedDoctors, setSuggestedDoctors] =
     useState<doctorsAgentListProps[]>();
   const [selectedDoctor, setSelectedDoctor] = useState<doctorsAgentListProps>();
+  const router = useRouter();
 
   // start consultation
 
@@ -40,6 +42,7 @@ function AddSessionModel() {
 
     if (result.data?.sessionId) {
       console.log(result.data?.sessionId);
+      router.push("/dashboard/medical-agent/" + result.data?.sessionId);
     }
     setLoading(false);
   };

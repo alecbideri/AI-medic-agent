@@ -26,3 +26,15 @@ export async function POST(req: NextRequest) {
     NextResponse.json({ error: err });
   }
 }
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const sessionId = searchParams.get("sessionId");
+  const user = await currentUser();
+
+  const result = await db.select
+    //@ts-ignore
+    .from(SessionChatTable)
+    //@ts-ignore
+    .where(eq(SessionChatTable.sessionId, sessionId));
+}
