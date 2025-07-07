@@ -35,7 +35,7 @@ const AppHeader = () => {
           width={50}
           height={50}
         />
-        <h1 className="text-3xl text-blue-500 font-bold">Medic AI</h1>
+        <h1 className="text-3xl text-black font-bold">Medic AI</h1>
       </div>
 
       {/*Menu options*/}

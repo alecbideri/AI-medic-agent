@@ -28,7 +28,21 @@ function AddSessionModel() {
 
   // start consultation
 
-  const onStartConsultation = () => {};
+  const onStartConsultation = async () => {
+    setLoading(true);
+
+    const result = await axios.post("/api/session-chat", {
+      notes: note,
+      selectedDoctor: selectedDoctor,
+    });
+
+    console.log(result.data);
+
+    if (result.data?.sessionId) {
+      console.log(result.data?.sessionId);
+    }
+    setLoading(false);
+  };
 
   const OnClickNext = async () => {
     setLoading(true);
@@ -70,6 +84,7 @@ function AddSessionModel() {
                       doctorAgentPropList={doctor}
                       key={index}
                       setSelectedDoctor={() => setSelectedDoctor(doctor)}
+                      selectedDoctor={selectedDoctor}
                     />
                   ))}
                 </div>
@@ -93,8 +108,12 @@ function AddSessionModel() {
               {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
             </Button>
           ) : (
-            <Button onClick={() => onStartConsultation()}>
+            <Button
+              disabled={loading || !selectedDoctor}
+              onClick={() => onStartConsultation()}
+            >
               Start Consultation
+              {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
             </Button>
           )}
         </DialogFooter>

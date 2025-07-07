@@ -5,15 +5,18 @@ import Image from "next/image";
 type props = {
   doctorAgentPropList: doctorsAgentListProps;
   setSelectedDoctor: any;
+  selectedDoctor: doctorsAgentListProps | undefined;
 };
 
 const SuggestedDoctorCard = ({
   doctorAgentPropList,
   setSelectedDoctor,
+  selectedDoctor,
 }: props) => {
   return (
     <div
-      className="flex flex-col gap-1 items-center justify-between border rounded-xl shadow-md p-5 mt-3 hover:border-black cursor-pointer"
+      className={`flex flex-col gap-1 items-center justify-between border rounded-xl shadow-md p-5 mt-3 hover:border-black cursor-pointer
+       ${selectedDoctor?.id == doctorAgentPropList.id && "border-black"}`}
       onClick={() => setSelectedDoctor(doctorAgentPropList)}
     >
       <Image
