@@ -8,6 +8,7 @@ export type doctorsAgentListProps = {
   description: string;
   image: string;
   agentPrompt: string;
+  voiceId?: string;
 };
 
 type props = {
