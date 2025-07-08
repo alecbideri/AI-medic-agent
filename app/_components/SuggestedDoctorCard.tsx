@@ -20,8 +20,8 @@ const SuggestedDoctorCard = ({
       onClick={() => setSelectedDoctor(doctorAgentPropList)}
     >
       <Image
-        src={doctorAgentPropList.image}
-        alt={doctorAgentPropList.specialist}
+        src={doctorAgentPropList.image || "/perfect_placeholder.png"}
+        alt={doctorAgentPropList.specialist || "/A doctor to help"}
         width={70}
         height={70}
         className="rounded-full object-cover"
