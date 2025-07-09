@@ -3,10 +3,11 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import { doctorsAgentListProps } from "@/app/_components/DoctorAgent";
-import { Circle, PhoneCall, PhoneOff } from "lucide-react";
+import { Loader, Circle, Loader2, PhoneCall, PhoneOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Vapi from "@vapi-ai/web";
+
 type SessionDetail = {
   id: number;
   notes: string;
@@ -21,6 +22,20 @@ type messages = {
   text: string;
 };
 
+type MedicalReport = {
+  sessionId: string;
+  agent: string;
+  user: string;
+  timestamp: string;
+  chiefComplaint: string;
+  summary: string;
+  symptoms: string[];
+  duration: string;
+  severity: string;
+  medicationsMentioned: string[];
+  recommendations: string[];
+};
+
 const Page = () => {
   const { sessionId } = useParams();
   const [sessionDetail, setSessionDetail] = useState<SessionDetail>();
@@ -29,6 +44,13 @@ const Page = () => {
   const [currentRole, setCurrentRole] = useState<string | null>();
   const [LiveTranscript, setLiveTranscript] = useState<string>();
   const [messages, setMessages] = useState<messages[]>([]);
+  const [isStartingCall, setIsStartingCall] = useState(false);
+  const [isEndingCall, setIsEndingCall] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState<MedicalReport | null>(
+    null,
+  );
+  const [reportError, setReportError] = useState<string | null>(null);
 
   useEffect(() => {
     sessionId && GetSessionDetails();
@@ -39,31 +61,33 @@ const Page = () => {
       const result = await axios.get(
         `/api/session-chat?sessionId=${sessionId}`,
       );
-      console.log(result.data);
+      console.log("Session details:", result.data);
       setSessionDetail(result.data[0]);
     } catch (error) {
       console.error("Error fetching session details:", error);
     }
   };
 
-  const StartCall = () => {
+  const StartCall = async () => {
+    setIsStartingCall(true);
+
     // Check if API key exists
     const apiKey = process.env.NEXT_PUBLIC_VAPI_API_KEY;
     if (!apiKey) {
       console.error("VAPI API key is missing!");
+      setIsStartingCall(false);
       return;
     }
 
     // Check if session detail is available
     if (!sessionDetail?.selectedDoctor) {
       console.error("Session detail or selected doctor is missing");
+      setIsStartingCall(false);
       return;
     }
 
     try {
       const vapi = new Vapi(apiKey);
-
-      // Set the instance immediately after creating it
       setVapiInstance(vapi);
 
       const VapiAgentConfig = {
@@ -90,22 +114,23 @@ const Page = () => {
         },
       };
 
-      console.log("Vapi Config:", VapiAgentConfig);
-
       // Add error event handler first
       vapi.on("error", (error) => {
         console.error("Vapi error:", error);
         setCallStarted(false);
+        setIsStartingCall(false);
       });
 
       // Set up all event handlers BEFORE starting the call
       vapi.on("call-start", () => {
         console.log("Call started");
         setCallStarted(true);
+        setIsStartingCall(false); // Stop loading when call actually starts
       });
 
       vapi.on("call-end", () => {
         setCallStarted(false);
+        setIsStartingCall(false);
         console.log("Call ended");
       });
 
@@ -150,25 +175,83 @@ const Page = () => {
       console.error("Failed to initialize or start Vapi call:", error);
       setCallStarted(false);
       setVapiInstance(null);
+      setIsStartingCall(false);
     }
   };
 
   // End call
+  const endCall = async () => {
+    setIsEndingCall(true);
 
-  const endCall = () => {
-    if (!vapiInstance) return;
+    if (!vapiInstance) {
+      setIsEndingCall(false);
+      return;
+    }
 
-    vapiInstance.stop();
+    try {
+      vapiInstance.stop();
+      vapiInstance.off("call-start");
+      vapiInstance.off("call-end");
+      vapiInstance.off("message");
+      vapiInstance.off("speech-start");
+      vapiInstance.off("speech-end");
+      vapiInstance.off("error");
 
-    // Remove listners (for memory management)
-    vapiInstance.off("call-start");
-    vapiInstance.off("call-end");
-    vapiInstance.off("message");
+      // Reset call states
+      setCallStarted(false);
+      setVapiInstance(null);
 
-    // reset call states
+      setIsEndingCall(false);
 
-    setCallStarted(false);
-    setVapiInstance(null);
+      // Generate report after call ends
+      if (messages.length > 0) {
+        console.log("Messages before generating report:", messages);
+        await GenerateReport();
+      } else {
+        console.log("No messages to generate report from");
+      }
+    } catch (error) {
+      console.error("Error ending call:", error);
+      setCallStarted(false);
+      setVapiInstance(null);
+      setIsEndingCall(false);
+    }
+  };
+
+  // Generating report
+  const GenerateReport = async () => {
+    setIsGeneratingReport(true);
+    setReportError(null);
+
+    try {
+      console.log("Generating report with data:", {
+        messages,
+        sessionDetail,
+        sessionId,
+      });
+
+      const result = await axios.post("/api/medical-report", {
+        messages: messages,
+        sessionDetail: sessionDetail,
+        sessionId: sessionId,
+      });
+
+      console.log("Report generation result:", result.data);
+      setGeneratedReport(result.data);
+      setIsGeneratingReport(false);
+
+      // Also refresh session details to get updated report
+      await GetSessionDetails();
+
+      return result.data;
+    } catch (error) {
+      console.error("Error generating report:", error);
+      setReportError(
+        //@ts-ignore
+        error.response?.data?.error || "Failed to generate report",
+      );
+      setIsGeneratingReport(false);
+    }
   };
 
   return (
@@ -176,7 +259,7 @@ const Page = () => {
       <div className="flex justify-between">
         <h2 className="p-1 px-2 border rounded-md flex gap-2 items-center">
           <Circle
-            className={`h-4 w-4  rounded-full ${callStarted ? "bg-green-500" : "bg-red-500"}`}
+            className={`h-4 w-4 rounded-full ${callStarted ? "bg-green-500" : "bg-red-500"}`}
           />
           {callStarted ? "connected..." : "Not Connected"}
         </h2>
@@ -202,7 +285,7 @@ const Page = () => {
           <p className="text-sm text-gray-500">AI Medical Voice Agent</p>
 
           <div className="mt-32 overflow-y-auto flex flex-col items-center px-10 md:px-28 lg:px-53 xl:px-72">
-            {messages?.map((msg: messages, index) => {
+            {messages?.slice(-4).map((msg: messages, index) => {
               return (
                 <h2 key={index} className="text-gray-400 p-2">
                   {msg.role}: {msg.text}
@@ -212,30 +295,130 @@ const Page = () => {
 
             {LiveTranscript && LiveTranscript?.length > 0 && (
               <h2 className="text-lg">
-                {currentRole}
-                {LiveTranscript}{" "}
+                {currentRole}: {LiveTranscript}
               </h2>
             )}
           </div>
 
           {!callStarted ? (
-            <Button className="mt-20 cursor-pointer" onClick={StartCall}>
-              <PhoneCall />
-              Start Call
+            <Button
+              className="mt-20 cursor-pointer"
+              onClick={StartCall}
+              disabled={isStartingCall || isGeneratingReport}
+            >
+              {isStartingCall ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <PhoneCall />
+                  Start Call
+                </>
+              )}
             </Button>
           ) : (
             <Button
               variant={"destructive"}
               className="mt-20 cursor-pointer"
               onClick={endCall}
+              disabled={isEndingCall || isGeneratingReport}
             >
-              <PhoneOff />
-              Disconnect
+              {isEndingCall ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Ending...
+                </>
+              ) : (
+                <>
+                  <PhoneOff />
+                  Disconnect
+                </>
+              )}
             </Button>
+          )}
+
+          {isGeneratingReport && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+              <Loader2 className="animate-spin h-4 w-4" />
+              Generating medical report...
+            </div>
+          )}
+
+          {reportError && (
+            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              <p className="font-semibold">Error generating report:</p>
+              <p className="text-sm">{reportError}</p>
+            </div>
+          )}
+
+          {generatedReport && (
+            <div className="mt-6 p-4 bg-green-100 border border-green-400 rounded-lg w-full max-w-2xl">
+              <h3 className="font-bold text-green-800 mb-2">
+                Medical Report Generated!
+              </h3>
+              <div className="text-sm text-green-700 space-y-1">
+                <p>
+                  <strong>Agent:</strong> {generatedReport.agent}
+                </p>
+                <p>
+                  <strong>Chief Complaint:</strong>{" "}
+                  {generatedReport.chiefComplaint}
+                </p>
+                <p>
+                  <strong>Summary:</strong> {generatedReport.summary}
+                </p>
+                <p>
+                  <strong>Symptoms:</strong>{" "}
+                  {generatedReport.symptoms?.join(", ")}
+                </p>
+                <p>
+                  <strong>Duration:</strong> {generatedReport.duration}
+                </p>
+                <p>
+                  <strong>Severity:</strong> {generatedReport.severity}
+                </p>
+                <p>
+                  <strong>Recommendations:</strong>
+                </p>
+                <ul className="list-disc list-inside ml-2">
+                  {generatedReport.recommendations?.map((rec, index) => (
+                    <li key={index}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Debug info */}
+          {messages.length > 0 && (
+            <div className="mt-4 p-3 bg-gray-100 border rounded-lg w-full max-w-2xl">
+              <h4 className="font-semibold text-gray-800 mb-2">Debug Info:</h4>
+              <p className="text-sm text-gray-600">
+                Messages count: {messages.length}
+              </p>
+              <Button
+                onClick={GenerateReport}
+                disabled={isGeneratingReport}
+                className="mt-2"
+                size="sm"
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Generating...
+                  </>
+                ) : (
+                  "Test Generate Report"
+                )}
+              </Button>
+            </div>
           )}
         </div>
       )}
     </div>
   );
 };
+
 export default Page;
