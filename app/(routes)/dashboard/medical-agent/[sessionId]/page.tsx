@@ -1,12 +1,20 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { doctorsAgentListProps } from "@/app/_components/DoctorAgent";
-import { Loader, Circle, Loader2, PhoneCall, PhoneOff } from "lucide-react";
+import {
+  Loader,
+  Circle,
+  Loader2,
+  PhoneCall,
+  PhoneOff,
+  ArrowRight,
+} from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Vapi from "@vapi-ai/web";
+import { toast } from "sonner";
 
 type SessionDetail = {
   id: number;
@@ -38,6 +46,7 @@ type MedicalReport = {
 
 const Page = () => {
   const { sessionId } = useParams();
+  const router = useRouter();
   const [sessionDetail, setSessionDetail] = useState<SessionDetail>();
   const [callStarted, setCallStarted] = useState(false);
   const [vapiInstance, setVapiInstance] = useState<any>();
@@ -51,6 +60,7 @@ const Page = () => {
     null,
   );
   const [reportError, setReportError] = useState<string | null>(null);
+  const [reportGenerated, setReportGenerated] = useState(false);
 
   useEffect(() => {
     sessionId && GetSessionDetails();
@@ -238,7 +248,14 @@ const Page = () => {
 
       console.log("Report generation result:", result.data);
       setGeneratedReport(result.data);
+      setReportGenerated(true);
       setIsGeneratingReport(false);
+
+      // Show success toast
+      toast.success("Your medical report is available on the dashboard!", {
+        duration: 4000,
+        position: "top-center",
+      });
 
       // Also refresh session details to get updated report
       await GetSessionDetails();
@@ -251,7 +268,18 @@ const Page = () => {
         error.response?.data?.error || "Failed to generate report",
       );
       setIsGeneratingReport(false);
+
+      // Show error toast
+      toast.error("Failed to generate report. Please try again.", {
+        duration: 4000,
+        position: "top-center",
+      });
     }
+  };
+
+  // Navigate to dashboard
+  const navigateToDashboard = () => {
+    router.push("/dashboard");
   };
 
   return (
@@ -356,7 +384,7 @@ const Page = () => {
           {generatedReport && (
             <div className="mt-6 p-4 bg-green-100 border border-green-400 rounded-lg w-full max-w-2xl">
               <h3 className="font-bold text-green-800 mb-2">
-                Medical Report Generated!
+                Medical Report Generated Successfully!
               </h3>
               <div className="text-sm text-green-700 space-y-1">
                 <p>
@@ -388,31 +416,58 @@ const Page = () => {
                   ))}
                 </ul>
               </div>
+
+              {/* Dashboard Navigation Button */}
+              <Button
+                onClick={navigateToDashboard}
+                className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
+              >
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Go to Dashboard
+              </Button>
             </div>
           )}
 
-          {/* Debug info */}
+          {/* Report Generation Section */}
           {messages.length > 0 && (
             <div className="mt-4 p-3 bg-gray-100 border rounded-lg w-full max-w-2xl">
-              <h4 className="font-semibold text-gray-800 mb-2">Debug Info:</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">Report Info:</h4>
               <p className="text-sm text-gray-600">
                 Messages count: {messages.length}
               </p>
-              <Button
-                onClick={GenerateReport}
-                disabled={isGeneratingReport}
-                className="mt-2"
-                size="sm"
-              >
-                {isGeneratingReport ? (
-                  <>
-                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                    Generating...
-                  </>
-                ) : (
-                  "Test Generate Report"
-                )}
-              </Button>
+
+              {!reportGenerated ? (
+                <Button
+                  onClick={GenerateReport}
+                  disabled={isGeneratingReport}
+                  className="mt-2"
+                  size="sm"
+                >
+                  {isGeneratingReport ? (
+                    <>
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                      Generating...
+                    </>
+                  ) : (
+                    "Generate Report"
+                  )}
+                </Button>
+              ) : (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <Circle className="h-2 w-2 bg-green-500 rounded-full" />
+                    Report Generated Successfully!
+                  </div>
+                  <Button
+                    onClick={navigateToDashboard}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <ArrowRight className="mr-1 h-3 w-3" />
+                    Dashboard
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
