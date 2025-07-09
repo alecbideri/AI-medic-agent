@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/config/db";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { SessionChatTable } from "@/config/schema";
 import { v4 as uuidv4 } from "uuid";
 import { currentUser } from "@clerk/nextjs/server";
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get("sessionId");
+  const user = await currentUser();
 
   if (!sessionId) {
     return NextResponse.json(
@@ -39,13 +40,26 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  if (sessionId == "all") {
+    const result = await db
+      .select()
+      .from(SessionChatTable)
+      .where(
+        //@ts-ignore
+        eq(SessionChatTable.createdBy, user?.primaryEmailAddress?.emailAddress),
+      )
+      .orderBy(desc(SessionChatTable.id));
+
+    return NextResponse.json(result);
+  }
+
   try {
     const result = await db
       .select()
       .from(SessionChatTable)
       .where(eq(SessionChatTable.sessionId, sessionId));
 
-    return NextResponse.json(result); // ADD THIS RETURN STATEMENT
+    return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json({ error: err }, { status: 500 });
   }

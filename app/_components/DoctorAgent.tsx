@@ -23,13 +23,12 @@ const DoctorAgent = ({ doctorAgentPropList }: props) => {
         alt="doctor desc"
         width={200}
         height={300}
-        className="w-full h-[250px] object-cover rounded-xl"
+        className="w-full h-[250px] object-cover border-3 border-gray-500  rounded-xl "
       />
       <h2 className="font-bold mt-1">{doctorAgentPropList.specialist}</h2>
       <p className="line-clamp-2 text-sm text-gray-500">
         {doctorAgentPropList.description}
       </p>
-      <AddSessionModel />
     </div>
   );
 };

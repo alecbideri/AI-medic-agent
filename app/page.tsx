@@ -27,23 +27,21 @@ export default function HeroSectionOne() {
             height={32}
             width={32}
           />
-          {"Revolutionize Patient Care with AI Voice Agents"
-            .split(" ")
-            .map((word, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0, filter: "blur(4px)", y: 10 }}
-                animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.1,
-                  ease: "easeInOut",
-                }}
-                className="mr-2 inline-block"
-              >
-                {word}
-              </motion.span>
-            ))}
+          {"Consult A Medical AI  ".split(" ").map((word, index) => (
+            <motion.span
+              key={index}
+              initial={{ opacity: 0, filter: "blur(4px)", y: 10 }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              transition={{
+                duration: 0.3,
+                delay: index * 0.1,
+                ease: "easeInOut",
+              }}
+              className=" px-2 mr-2 inline-block"
+            >
+              {word}
+            </motion.span>
+          ))}
         </h1>
         <motion.p
           initial={{
@@ -98,11 +96,10 @@ export default function HeroSectionOne() {
         >
           <div className="w-full overflow-hidden rounded-xl border border-gray-300 dark:border-gray-700">
             <img
-              src="https://assets.aceternity.com/pro/aceternity-landing.webp"
+              src="/Medical_AI_2.png"
               alt="Landing page preview"
-              className="aspect-[16/9] h-auto w-full object-cover"
-              height={1000}
-              width={1000}
+              className="aspect-[12/9]  w-full "
+              height={900}
             />
           </div>
         </motion.div>
@@ -130,7 +127,9 @@ const Navbar = () => {
       ) : (
         <div className="flex items-center gap-5">
           <UserButton />
-          <Button className="cursor-pointer">Dashboard</Button>
+          <Link href={"/dashboard"}>
+            <Button className="cursor-pointer">Dashboard</Button>
+          </Link>
         </div>
       )}
     </nav>
