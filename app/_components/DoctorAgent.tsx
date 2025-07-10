@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import AddSessionModel from "@/app/_components/AddSessionModel";
+import { Badge } from "@/components/ui/badge";
 
 export type doctorsAgentListProps = {
   id: number;
@@ -9,6 +10,7 @@ export type doctorsAgentListProps = {
   image: string;
   agentPrompt: string;
   voiceId?: string;
+  subscriptionRequired: boolean;
 };
 
 type props = {
@@ -17,7 +19,10 @@ type props = {
 
 const DoctorAgent = ({ doctorAgentPropList }: props) => {
   return (
-    <div>
+    <div className="relative">
+      {doctorAgentPropList.subscriptionRequired && (
+        <Badge className="absolute m-2 right-0">Premium</Badge>
+      )}
       <Image
         src={doctorAgentPropList.image}
         alt="doctor desc"
