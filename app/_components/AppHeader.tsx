@@ -18,7 +18,7 @@ const AppHeader = () => {
     {
       id: 3,
       name: "Pricing",
-      path: "/dashboard/pricing",
+      path: "/dashboard/billing",
     },
     {
       id: 4,
